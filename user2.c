@@ -4,6 +4,49 @@
 #define CLIENT_MSG_QUEUE 5678
 #define LOG_FILE "user2_log.txt"
 
+void handle_server_message(int server_msgid) {
+    struct message msg;
+    int log_fd = open(LOG_FILE, O_WRONLY | O_CREAT | O_APPEND, 0644);
+
+    if (log_fd == -1) {
+        perror("Failed to open log file");
+        exit(EXIT_FAILURE);
+    }
+
+    while (1) {
+        // 서버 메시지 수신
+        if (msgrcv(server_msgid, (void *)&msg, sizeof(msg.msg_text), 0, 0) == -1) {
+            perror("msgrcv");
+            exit(EXIT_FAILURE);
+        }
+
+        // 서버 메시지 출력 및 로그 파일에 저장
+        printf("Server: %s\n", msg.msg_text);
+        dprintf(log_fd, "Server: %s\n", msg.msg_text);
+
+        // 서버가 "exit" 메시지를 보낸 경우 채팅 종료
+        if (strncmp(msg.msg_text, "exit", 4) == 0) {
+            printf("Server has exited the chat.\n");
+            dprintf(log_fd, "Server has exited the chat.\n");
+            break;
+        }
+
+        // 서버가 "edit" 메시지를 보낸 경우 텍스트 편집기 실행
+        if (strncmp(msg.msg_text, "edit", 4) == 0) {
+            printf("Server requested to open the editor.\n");
+            dprintf(log_fd, "Server requested to open the editor.\n");
+
+            pid_t editor_pid = fork();
+            if (editor_pid == 0) {
+                execlp("nano", "nano", LOG_FILE, (char *)NULL);
+                perror("execlp");
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
+
+    close(log_fd);
+}
 int main(int argc, char *argv[]) {
     // 사용자 이름을 설정하는 인자가 전달되었는지 확인
     if (argc < 2) {

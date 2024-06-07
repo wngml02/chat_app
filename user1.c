@@ -3,7 +3,50 @@
 #define SERVER_MSG_QUEUE 1234
 #define CLIENT_MSG_QUEUE 5678
 #define LOG_FILE "user1_log.txt"
+// 클라이언트 메시지를 처리하는 함수
+void handle_client_message(int client_msgid) {
+    struct message msg;
+    int log_fd = open(LOG_FILE, O_WRONLY | O_CREAT | O_APPEND, 0644);
 
+    if (log_fd == -1) {
+        perror("Failed to open log file");
+        exit(EXIT_FAILURE);
+    }
+
+    while (1) {
+        // 클라이언트 메시지 수신
+        if (msgrcv(client_msgid, (void *)&msg, sizeof(msg.msg_text), 0, 0) == -1) {
+            perror("msgrcv");
+            exit(EXIT_FAILURE);
+        }
+
+        // 클라이언트 메시지 출력 및 로그 파일에 저장
+        printf("Client: %s\n", msg.msg_text);
+        dprintf(log_fd, "Client: %s\n", msg.msg_text);
+
+        // 클라이언트가 "exit" 메시지를 보낸 경우 채팅 종료
+        if (strncmp(msg.msg_text, "exit", 4) == 0) {
+            printf("Client has exited the chat.\n");
+            dprintf(log_fd, "Client has exited the chat.\n");
+            break;
+        }
+
+        // 클라이언트가 "edit" 메시지를 보낸 경우 텍스트 편집기 실행
+        if (strncmp(msg.msg_text, "edit", 4) == 0) {
+            printf("Client requested to open the editor.\n");
+            dprintf(log_fd, "Client requested to open the editor.\n");
+
+            pid_t editor_pid = fork();
+            if (editor_pid == 0) {
+                execlp("nano", "nano", LOG_FILE, (char *)NULL);
+                perror("execlp");
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
+
+    close(log_fd);
+}
 int main(int argc, char *argv[]) {
     // 사용자 이름을 설정하는 인자가 전달되었는지 확인
     if (argc < 2) {
