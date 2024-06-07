@@ -9,10 +9,9 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <sys/wait.h>
-#include <signal.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <time.h>
+#include <sys/stat.h> // 추가
 
 #define MAX_TEXT 512
 
