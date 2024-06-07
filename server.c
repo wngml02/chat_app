@@ -4,7 +4,7 @@
 #define CLIENT_MSG_QUEUE 5678
 #define LOG_FILE "server_log.txt"
 
-// 클라이언트 메시지를 처리하는 함수
+// 클라이언트 메시지를 처리하는 함수(시스템 통신)
 void handle_client_message(int client_msgid) {
     struct message msg;
     int log_fd = open(LOG_FILE, O_WRONLY | O_CREAT | O_APPEND, 0644);
@@ -21,7 +21,7 @@ void handle_client_message(int client_msgid) {
             exit(EXIT_FAILURE);
         }
 
-        // 클라이언트 메시지 출력 및 로그 파일에 저장
+        // 클라이언트 메시지 출력 및 로그 파일에 저장 (조건 1 파일 입력 해당)
         printf("Client: %s\n", msg.msg_text);
         dprintf(log_fd, "Client: %s\n", msg.msg_text);
 
@@ -32,7 +32,7 @@ void handle_client_message(int client_msgid) {
             break;
         }
 
-        // 클라이언트가 "edit" 메시지를 보낸 경우 텍스트 편집기 실행
+        // 클라이언트가 "edit" 메시지를 보낸 경우 텍스트 편집기 실행 : (조건 4 execlp함수 사용)
         if (strncmp(msg.msg_text, "edit", 4) == 0) {
             printf("Client requested to open the editor.\n");
             dprintf(log_fd, "Client requested to open the editor.\n");
@@ -62,14 +62,14 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    // 클라이언트 메시지를 별도의 프로세스에서 처리
+    // 클라이언트 메시지를 자식 프로세스에서 처리 (조건 3 프로세스 사용)
     pid_t pid = fork();
     if (pid == 0) {
         handle_client_message(client_msgid);
         exit(EXIT_SUCCESS);
     }
 
-    // 서버 메시지 송신 루프
+    // 서버 메시지 송신 루프 (조건 5, 6 IPC 시스템 통신)
     while (1) {
         printf("Server: ");
         fgets(msg.msg_text, MAX_TEXT, stdin);
@@ -89,7 +89,7 @@ int main() {
         }
     }
 
-    // 파일 정보 출력 (로그 파일)
+    // 파일 정보 출력 (조건 1 출력 로그 파일)
     display_file_info(LOG_FILE);
 
     // 메시지 큐 삭제 및 자식 프로세스 종료 대기

@@ -21,7 +21,9 @@ struct message {
     char msg_text[MAX_TEXT];
 };
 
-// 파일 정보를 출력하는 함수 선언
+// 파일 정보를 출력하는 함수 선언 (조건 1)
 void display_file_info(const char *filename);
 
 #endif // COMMON_H
+
+//시스템 및 파일 정보 활용(조건 2)

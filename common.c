@@ -1,6 +1,6 @@
 #include "common.h"
 
-// 파일 정보를 출력하는 함수 구현
+// 파일 정보를 출력하는 함수 구현 (조건 1)
 void display_file_info(const char *filename) {
     struct stat file_stat;
 
