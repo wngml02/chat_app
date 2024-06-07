@@ -3,10 +3,11 @@ CFLAGS = -Wall -g
 
 SERVER_SRC = server.c
 CLIENT_SRC = client.c
+COMMON_SRC = common.c
 COMMON_HDR = common.h
 
-SERVER_OBJ = $(SERVER_SRC:.c=.o)
-CLIENT_OBJ = $(CLIENT_SRC:.c=.o)
+SERVER_OBJ = $(SERVER_SRC:.c=.o) $(COMMON_SRC:.c=.o)
+CLIENT_OBJ = $(CLIENT_SRC:.c=.o) $(COMMON_SRC:.c=.o)
 
 TARGETS = server client
 
