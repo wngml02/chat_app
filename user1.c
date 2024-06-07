@@ -2,7 +2,8 @@
 
 #define SERVER_MSG_QUEUE 1234
 #define CLIENT_MSG_QUEUE 5678
-#define LOG_FILE "user1_log.txt"
+#define LOG_FILE "server_log.txt"
+
 // 클라이언트 메시지를 처리하는 함수
 void handle_client_message(int client_msgid) {
     struct message msg;
@@ -47,21 +48,12 @@ void handle_client_message(int client_msgid) {
 
     close(log_fd);
 }
-int main(int argc, char *argv[]) {
-    // 사용자 이름을 설정하는 인자가 전달되었는지 확인
-    if (argc < 2) {
-        fprintf(stderr, "Usage: %s <username>\n", argv[0]);
-        exit(EXIT_FAILURE);
-    }
 
-    // 전달된 사용자 이름을 저장
-    char username[MAX_TEXT];
-    snprintf(username, sizeof(username), "%s", argv[1]);
-
+int main() {
     int server_msgid, client_msgid;
     struct message msg;
 
-    // 서버 및 클라이언트 메시지 큐 생성
+    // 메시지 큐 생성
     server_msgid = msgget((key_t)SERVER_MSG_QUEUE, 0666 | IPC_CREAT);
     client_msgid = msgget((key_t)CLIENT_MSG_QUEUE, 0666 | IPC_CREAT);
 
@@ -70,22 +62,29 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    // 클라이언트 메시지를 별도의 프로세스에서 처리
+    pid_t pid = fork();
+    if (pid == 0) {
+        handle_client_message(client_msgid);
+        exit(EXIT_SUCCESS);
+    }
+
+    // 서버 메시지 송신 루프
     while (1) {
-        // 사용자 이름과 함께 입력 메시지를 출력
-        printf("%s: ", username);
+        printf("Server: ");
         fgets(msg.msg_text, MAX_TEXT, stdin);
 
-        msg.msg_type = 1;
+        msg.msg_type = 1;  // 메시지 타입 설정
 
-        // 클라이언트 메시지 큐에 메시지 전송
-        if (msgsnd(client_msgid, (void *)&msg, sizeof(msg.msg_text), 0) == -1) {
+        // 서버 메시지 송신
+        if (msgsnd(server_msgid, (void *)&msg, sizeof(msg.msg_text), 0) == -1) {
             perror("msgsnd");
             exit(EXIT_FAILURE);
         }
 
-        // 사용자가 "exit"을 입력하면 채팅 종료
+        // 서버가 "exit" 메시지를 보낸 경우 채팅 종료
         if (strncmp(msg.msg_text, "exit", 4) == 0) {
-            printf("%s has exited the chat.\n", username);
+            printf("Server has exited the chat.\n");
             break;
         }
     }
@@ -93,8 +92,8 @@ int main(int argc, char *argv[]) {
     // 파일 정보 출력 (로그 파일)
     display_file_info(LOG_FILE);
 
-    // 클라이언트 메시지 큐 제거 및 자식 프로세스 종료 대기
-    msgctl(client_msgid, IPC_RMID, NULL);
+    // 메시지 큐 삭제 및 자식 프로세스 종료 대기
+    msgctl(server_msgid, IPC_RMID, NULL);
     wait(NULL);
 
     return 0;

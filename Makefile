@@ -14,13 +14,13 @@ TARGETS = user1 user2
 all: $(TARGETS)
 
 user1: $(USER1_OBJ)
-	$(CC) $(CFLAGS) -o $@ $^
+    $(CC) $(CFLAGS) -o $@ $^
 
 user2: $(USER2_OBJ)
-	$(CC) $(CFLAGS) -o $@ $^
+    $(CC) $(CFLAGS) -o $@ $^
 
 %.o: %.c $(COMMON_HDR)
-	$(CC) $(CFLAGS) -c $< -o $@
+    $(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(TARGETS) *.o
+    rm -f $(TARGETS) *.o
